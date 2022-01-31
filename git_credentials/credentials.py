@@ -57,7 +57,10 @@ class GitCredentials:
         self._run_credential_cmd("approve", description)
 
     def _run_credential_cmd(self, cmd: str, description: GitCredentialDescription) -> bytes:
-        fullcmd = [shutil.which("git"), "-C", self.repository_path, "credential", cmd]
+        git = shutil.which("git")
+        if git is None:
+            raise OSError("git not found in PATH.")
+        fullcmd = [git, "-C", self.repository_path, "credential", cmd]
         proc = None
         try:
             with tempfile.TemporaryFile('w+b') as stdout:
@@ -76,7 +79,7 @@ class GitCredentials:
                             if failed_reading:
                                 raise GitCredentialNotStoredError(description.host)
                         if retcode != 0:
-                            raise subprocess.CalledProcessError(retcode, fullcmd, stdout, stderr)
+                            raise subprocess.CalledProcessError(retcode, fullcmd, stdout.read(), stderr.read())
                         return stdout.read()
         except subprocess.CalledProcessError as e:
             raise GitCredentialError("The 'git' command returned a non-zero exit code.") from e
@@ -105,11 +108,11 @@ class GitCredentials:
     def _parse_description(description_str: str) -> GitCredentialDescription:
         cp = ConfigParser()
         cp.read_string("[desc]\n" + description_str)
-        cp = cp["desc"]
+        sec = cp["desc"]
         return GitCredentialDescription(
-            protocol=cp.get('protocol'),
-            host=cp.get('host'),
-            path=cp.get('path', None),
-            username=cp.get('username', None),
-            password=cp.get('password', None),
+            protocol=sec.get('protocol'),
+            host=sec.get('host'),
+            path=sec.get('path', None),
+            username=sec.get('username', None),
+            password=sec.get('password', None),
         )
