@@ -5,7 +5,7 @@ name: Build, test and publish
 on: [push, pull_request]
 
 jobs:
- typechecks:
+  typechecks:
     runs-on: ubuntu-latest
     name: Type checks
     strategy:
