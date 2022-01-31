@@ -1,3 +1,4 @@
+# type: ignore
 import os.path
 import shutil
 import subprocess

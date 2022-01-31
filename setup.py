@@ -1,4 +1,5 @@
 # coding=utf-8
+# type: ignore
 __version__ = '1.0.0'
 from setuptools import setup, find_packages
 
