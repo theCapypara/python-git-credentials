@@ -13,6 +13,7 @@ setup(
     name='git-credentials',
     version=__version__,
     packages=['git_credentials'],
+    package_data={'git_credentials': ['py.typed']},
     description='Simple library to interact with Git Credentials',
     long_description=long_description,
     long_description_content_type='text/x-rst',

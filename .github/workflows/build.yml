@@ -18,7 +18,6 @@ jobs:
         name: Run type checks
         with:
           mypy_flags: '--config-file mypy.ini --junit-xml mypy.xml'
-          requirements: '-r requirements.txt'
           python_version: '${{ matrix.python-version }}'
       - name: Upload Unit Test Results
         if: always()
