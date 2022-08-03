@@ -25,11 +25,12 @@ class GitCredentialDescription(NamedTuple):
 
 class GitCredentials:
     """A class to wrap around git-credentials. See it's man page for more info."""
-    def __init__(self, repository_path: str, env: Optional[Dict[str, str]] = None):
+    def __init__(self, repository_path: Optional[str]=None, env: Optional[Dict[str, str]] = None):
         """Creates a new environment for git-credential commands to run in."""
         self.repository_path = repository_path
         self.env = env if env else os.environ.copy()
         self.env['GIT_TERMINAL_PROMPT'] = '0'
+        self.env['GIT_ASKPASS']='0'
 
     def fill(self, description: GitCredentialDescription) -> GitCredentialDescription:
         """
@@ -60,7 +61,10 @@ class GitCredentials:
         git = shutil.which("git")
         if git is None:
             raise OSError("git not found in PATH.")
-        fullcmd = [git, "-C", self.repository_path, "credential", cmd]
+        if self.repository_path is None:
+            fullcmd = [git, "credential", cmd]
+        else:
+            fullcmd = [git, "-C", self.repository_path, "credential", cmd]
         proc = None
         try:
             with tempfile.TemporaryFile('w+b') as stdout:
@@ -69,7 +73,9 @@ class GitCredentials:
                         stdin.write(bytes(self._convert_description(description), 'utf-8'))
                         stdin.seek(0)
                         proc = subprocess.Popen(fullcmd, stdin=stdin, stdout=stdout, stderr=stderr, env=self.env)
+                        
                         retcode = proc.wait()
+                        
                         stderr.seek(0)
                         stdout.seek(0)
                         if cmd == "fill" and retcode == 128:
