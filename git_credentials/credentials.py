@@ -25,13 +25,21 @@ class GitCredentialDescription(NamedTuple):
 
 class GitCredentials:
     """A class to wrap around git-credentials. See it's man page for more info."""
-    def __init__(self, repository_path: Optional[str]=None, env: Optional[Dict[str, str]] = None):
-        """Creates a new environment for git-credential commands to run in."""
+    def __init__(self, repository_path: Optional[str]=None, env: Optional[Dict[str, str]] = None, set_gitaskpass_0:bool=False):
+        """Creates a new environment for git-credential commands to run in.
+        
+        Keyword arguments:
+        repository_path -- Optional path to git repository.
+        env -- Optional custom environment variable map.
+        set_gitaskpass_0 -- Flag variable. If True, sets GIT_ASKPASS to 0.
+        Useful for disabling prompt in all terminals.
+        """
         self.repository_path = repository_path
         self.env = env if env else os.environ.copy()
         self.env['GIT_TERMINAL_PROMPT'] = '0'
-        self.env['GIT_ASKPASS']='0'
-
+        if set_gitaskpass_0 is True:
+            self.env['GIT_ASKPASS'] = '0'
+            
     def fill(self, description: GitCredentialDescription) -> GitCredentialDescription:
         """
         Request a password from Git. The user is NOT interactively asked for the password.
@@ -73,9 +81,7 @@ class GitCredentials:
                         stdin.write(bytes(self._convert_description(description), 'utf-8'))
                         stdin.seek(0)
                         proc = subprocess.Popen(fullcmd, stdin=stdin, stdout=stdout, stderr=stderr, env=self.env)
-                        
                         retcode = proc.wait()
-                        
                         stderr.seek(0)
                         stdout.seek(0)
                         if cmd == "fill" and retcode == 128:
