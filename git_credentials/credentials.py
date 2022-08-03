@@ -25,12 +25,21 @@ class GitCredentialDescription(NamedTuple):
 
 class GitCredentials:
     """A class to wrap around git-credentials. See it's man page for more info."""
-    def __init__(self, repository_path: str, env: Optional[Dict[str, str]] = None):
-        """Creates a new environment for git-credential commands to run in."""
+    def __init__(self, repository_path: Optional[str]=None, env: Optional[Dict[str, str]] = None, set_gitaskpass_0:bool=False):
+        """Creates a new environment for git-credential commands to run in.
+        
+        Keyword arguments:
+        repository_path -- Optional path to git repository.
+        env -- Optional custom environment variable map.
+        set_gitaskpass_0 -- Flag variable. If True, sets GIT_ASKPASS to 0.
+        Useful for disabling prompt in all terminals.
+        """
         self.repository_path = repository_path
         self.env = env if env else os.environ.copy()
         self.env['GIT_TERMINAL_PROMPT'] = '0'
-
+        if set_gitaskpass_0 is True:
+            self.env['GIT_ASKPASS'] = '0'
+            
     def fill(self, description: GitCredentialDescription) -> GitCredentialDescription:
         """
         Request a password from Git. The user is NOT interactively asked for the password.
@@ -60,7 +69,10 @@ class GitCredentials:
         git = shutil.which("git")
         if git is None:
             raise OSError("git not found in PATH.")
-        fullcmd = [git, "-C", self.repository_path, "credential", cmd]
+        if self.repository_path is None:
+            fullcmd = [git, "credential", cmd]
+        else:
+            fullcmd = [git, "-C", self.repository_path, "credential", cmd]
         proc = None
         try:
             with tempfile.TemporaryFile('w+b') as stdout:
